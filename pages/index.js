@@ -1,19 +1,20 @@
 import axios from "axios";
 import TakeTicket from "../components/TakeTicket";
 import Pusher from "pusher-js";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import TicketList from "../components/TicketList";
-import useSound from "use-sound";
 
 const Queue = () => {
   const [tickets, setTickets] = useState([]);
+  const audio = useRef(
+    typeof Audio !== "undefined" ? new Audio("/sounds/ding.mp3") : undefined
+  );
+
   const pusher = new Pusher(process.env.NEXT_PUBLIC_KEY, {
     cluster: "eu",
     authEndpoint: `api/pusher/auth`,
     auth: {},
   });
-
-  const [playDing] = useSound("/sounds/ding.mp3", { volume: 0.8 });
 
   useEffect(() => {
     axios.get("/api/get-ticket").then((res) => setTickets(res.data));
@@ -23,12 +24,14 @@ const Queue = () => {
     const channel = pusher.subscribe("ticket");
 
     channel.bind("ticket-taken", function (data) {
-      playDing();
+      //playDing();
+      audio.current?.play();
       setTickets((prev) => [...prev, data]);
     });
 
     channel.bind("ticket-removed", function (data) {
-      playDing();
+      //playDing();
+      audio.current?.play();
       setTickets((prev) => prev.filter((item) => item._id !== data._id));
     });
 
